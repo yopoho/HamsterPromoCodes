@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Promo Codes</title>
+    <title>Промо-коды</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -63,17 +63,40 @@
             color: red;
             font-weight: bold;
         }
+
+        .promo-link {
+            color: #63b4ea;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <h1>Promo Codes</h1>
+    <h1><a href="https://t.me/myHamsterKeyGameChannel" target="_blank" class="promo-link">Наш канал</a></h1>
     <ul class="promo-list" id="a"></ul>
 
     <script>
         (function() {
             let canCopy = true;
             let copyTimeout;
+            const maxCopiesPerDay = 16;
+            const waitTime = 10000; // 10 секунд
             const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4N1BuOEtoTTFJekVYek9hQ3V6eC1RWGFDWWRkLWZ3ZTlFZWhuYnV2SW1RQnlxczZuem1SSkZtb0VfZHRyYy1Hb2pRQS9leGVj");
+
+            function getStorageData() {
+                const storageData = localStorage.getItem('promoCopyData');
+                const today = new Date().toISOString().split('T')[0];
+                if (storageData) {
+                    const data = JSON.parse(storageData);
+                    if (data.date === today) {
+                        return data;
+                    }
+                }
+                return { date: today, copies: 0 };
+            }
+
+            function updateStorageData(data) {
+                localStorage.setItem('promoCopyData', JSON.stringify(data));
+            }
 
             async function fetchPromoCodes() {
                 const response = await fetch(scriptUrl);
@@ -115,16 +138,27 @@
 
                     const copyButton = document.createElement('button');
                     copyButton.className = 'copy-btn';
-                    copyButton.textContent = 'Copy';
+                    copyButton.textContent = 'Копировать';
                     copyButton.onclick = async function() {
-                        if (!canCopy && copyButton.textContent !== "Copied!") {
-                            alert("Please wait 5 seconds");
+                        const storageData = getStorageData();
+
+                        if (copyButton.textContent !== "Скопировано!" && storageData.copies >= maxCopiesPerDay) {
+                            alert("Вы достигли максимального количества копирований на сегодня.");
                             return;
                         }
+
+                        if (!canCopy && copyButton.textContent !== "Скопировано!") {
+                            alert("Подождите 10 секунд");
+                            return;
+                        }
+
                         try {
                             await navigator.clipboard.writeText(promo.code);
-                            copyButton.textContent = "Copied!";
+                            copyButton.textContent = "Скопировано!";
                             canCopy = false;
+
+                            storageData.copies += 1;
+                            updateStorageData(storageData);
 
                             const response = await fetch(scriptUrl, {
                                 method: 'POST',
@@ -138,19 +172,19 @@
                             if (result === "Success") {
                                 promoCodeDiv.classList.add('taken');
                             } else {
-                                copyButton.textContent = "Copy";
-                                alert("Failed to mark promo code as taken.");
+                                copyButton.textContent = "Копировать";
+                                alert("Не удалось отметить промо-код как использованный.");
                             }
 
-                            // Reset canCopy after 5 seconds
+                            // Reset canCopy after 10 seconds
                             clearTimeout(copyTimeout);
                             copyTimeout = setTimeout(() => {
                                 canCopy = true;
-                            }, 5000);
+                            }, waitTime);
 
                         } catch (err) {
-                            console.log("Copy error", err);
-                            alert("Failed to copy promo code.");
+                            console.log("Ошибка копирования", err);
+                            alert("Не удалось скопировать промо-код.");
                         }
                     };
 
@@ -164,7 +198,7 @@
                 setInterval(async () => {
                     const updatedPromoCodes = await fetchPromoCodes();
                     updatePromoList(updatedPromoCodes);
-                }, 1000);
+                }, 1500);
             }
 
             initializePromoList();
