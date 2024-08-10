@@ -113,6 +113,8 @@
             }
 
             function updatePromoList(promoCodes) {
+                promoCodes.sort((a, b) => a.taken - b.taken);
+
                 promoCodes.forEach((promo, index) => {
                     const promoItem = document.getElementById(`promo${index}`);
 
@@ -124,6 +126,8 @@
 
             async function initializePromoList() {
                 const promoCodes = await fetchPromoCodes();
+                promoCodes.sort((a, b) => a.taken - b.taken);
+                
                 const promoListElement = document.getElementById('a');
                 promoListElement.innerHTML = '';
 
