@@ -70,7 +70,7 @@
         (function() {
             let canCopy = true;
             let copyTimeout;
-            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3SnNCcWZIaVZsV0YwZVAxQ0xoUzA4RjB3Q3NOc05fUmFvbndoMTRCNlp3OUU5ZGp0S2JVZUN4V3NYd0FVNVV0eGMzQS9leGVj");
+            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4N1BuOEtoTTFJekVYek9hQ3V6eC1RWGFDWWRkLWZ3ZTlFZWhuYnV2SW1RQnlxczZuem1SSkZtb0VfZHRyYy1Hb2pRQS9leGVj");
 
             async function fetchPromoCodes() {
                 const response = await fetch(scriptUrl);
@@ -114,7 +114,7 @@
                     copyButton.className = 'copy-btn';
                     copyButton.textContent = 'Copy';
                     copyButton.onclick = async function() {
-                        if (!canCopy) {
+                        if (!canCopy && copyButton.textContent !== "Copied!") {
                             alert("Please wait 5 seconds");
                             return;
                         }
