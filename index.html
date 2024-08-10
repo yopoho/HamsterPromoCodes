@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Промо-коды</title>
     <style>
+        /* Styles unchanged */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -82,6 +83,21 @@
 
     <script>
         (function() {
+            const cyrb53 = (str, seed = 0) => {
+                let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+                for(let i = 0, ch; i < str.length; i++) {
+                    ch = str.charCodeAt(i);
+                    h1 = Math.imul(h1 ^ ch, 2654435761);
+                    h2 = Math.imul(h2 ^ ch, 1597334677);
+                }
+                h1  = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+                h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+                h2  = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+                h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+              
+                return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+            };
+
             let canCopy = true;
             let copyTimeout;
             const maxCopiesPerDay = 16;
@@ -115,8 +131,9 @@
             }
 
             function updatePromoList(promoCodes) {
-                promoCodes.forEach((promo, index) => {
-                    const promoItem = document.getElementById(`promo${index}`);
+                promoCodes.forEach((promo) => {
+                    const promoId = cyrb53(promo.code);
+                    const promoItem = document.getElementById(`promo${promoId}`);
 
                     if (promoItem && promo.taken && !promoItem.classList.contains('taken')) {
                         promoItem.classList.add('taken');
@@ -126,20 +143,23 @@
 
             async function initializePromoList() {
                 const promoCodes = await fetchPromoCodes();
+                promoCodes.sort((a, b) => a.taken - b.taken);
+
                 const promoListElement = document.getElementById('a');
                 promoListElement.innerHTML = '';
 
-                promoCodes.forEach((promo, index) => {
+                promoCodes.forEach((promo) => {
+                    const promoId = cyrb53(promo.code);
                     const listItem = document.createElement('li');
                     listItem.className = 'promo-item';
 
                     const numberDiv = document.createElement('div');
                     numberDiv.className = 'promo-number';
-                    numberDiv.textContent = `${index + 1}.`;
+                    numberDiv.textContent = `${promoCodes.indexOf(promo) + 1}.`;
 
                     const promoCodeDiv = document.createElement('div');
                     promoCodeDiv.className = 'promo-code' + (promo.taken ? ' taken' : '');
-                    promoCodeDiv.id = `promo${index}`;
+                    promoCodeDiv.id = `promo${promoId}`;
                     promoCodeDiv.textContent = promo.code;
 
                     const copyButton = document.createElement('button');
@@ -200,7 +220,7 @@
                     promoListElement.appendChild(listItem);
                 });
 
-                // Check for updates every 1 second
+                // Check for updates every 1.5 seconds
                 setInterval(async () => {
                     const updatedPromoCodes = await fetchPromoCodes();
                     updatePromoList(updatedPromoCodes);
