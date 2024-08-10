@@ -160,7 +160,7 @@
                     const promoCodeDiv = document.createElement('div');
                     promoCodeDiv.className = 'promo-code' + (promo.taken ? ' taken' : '');
                     promoCodeDiv.id = `promo${promoId}`;
-                    promoCodeDiv.textContent = promo.code;
+                    promoCodeDiv.textContent = promo.code.slice(0, 12) + '...';;
 
                     const copyButton = document.createElement('button');
                     copyButton.className = 'copy-btn';
