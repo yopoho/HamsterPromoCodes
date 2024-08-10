@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promo Codes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .promo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .promo-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .promo-number {
+            margin-right: 5px;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .promo-code {
+            margin-right: 10px;
+            user-select: none;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f4f4f4;
+            cursor: default;
+            display: inline-block;
+        }
+
+        .taken {
+            background-color: orange;
+            color: white;
+        }
+
+        .copy-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
+
+        .message {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Promo Codes</h1>
+    <ul class="promo-list" id="a"></ul>
+
+    <script>
+        (function() {
+            let canCopy = true;
+            let copyTimeout;
+            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3SnNCcWZIaVZsV0YwZVAxQ0xoUzA4RjB3Q3NOc05fUmFvbndoMTRCNlp3OUU5ZGp0S2JVZUN4V3NYd0FVNVV0eGMzQS9leGVj");
+
+            async function fetchPromoCodes() {
+                const response = await fetch(scriptUrl);
+                const responseText = await response.text();
+                let text = '';
+                for (let i = 0; i < responseText.length; i++) {
+                    text += String.fromCharCode(responseText.charCodeAt(i) ^ 1);
+                }
+                return JSON.parse(text);
+            }
+
+            function updatePromoList(promoCodes) {
+                promoCodes.forEach((promo, index) => {
+                    const promoItem = document.getElementById(`promo${index}`);
+
+                    if (promoItem && promo.taken && !promoItem.classList.contains('taken')) {
+                        promoItem.classList.add('taken');
+                    }
+                });
+            }
+
+            async function initializePromoList() {
+                const promoCodes = await fetchPromoCodes();
+                const promoListElement = document.getElementById('a');
+                promoListElement.innerHTML = '';
+
+                promoCodes.forEach((promo, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'promo-item';
+
+                    const numberDiv = document.createElement('div');
+                    numberDiv.className = 'promo-number';
+                    numberDiv.textContent = `${index + 1}.`;
+
+                    const promoCodeDiv = document.createElement('div');
+                    promoCodeDiv.className = 'promo-code' + (promo.taken ? ' taken' : '');
+                    promoCodeDiv.id = `promo${index}`;
+                    promoCodeDiv.textContent = promo.code;
+
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-btn';
+                    copyButton.textContent = 'Copy';
+                    copyButton.onclick = async function() {
+                        if (!canCopy) {
+                            alert("Please wait 5 seconds");
+                            return;
+                        }
+                        try {
+                            await navigator.clipboard.writeText(promo.code);
+                            copyButton.textContent = "Copied!";
+                            canCopy = false;
+
+                            const response = await fetch(scriptUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                },
+                                body: `code=${encodeURIComponent(promo.code)}`
+                            });
+
+                            const result = await response.text();
+                            if (result === "Success") {
+                                promoCodeDiv.classList.add('taken');
+                            } else {
+                                copyButton.textContent = "Copy";
+                                alert("Failed to mark promo code as taken.");
+                            }
+
+                            // Reset canCopy after 5 seconds
+                            clearTimeout(copyTimeout);
+                            copyTimeout = setTimeout(() => {
+                                canCopy = true;
+                            }, 5000);
+
+                        } catch (err) {
+                            console.log("Copy error", err);
+                            alert("Failed to copy promo code.");
+                        }
+                    };
+
+                    listItem.appendChild(numberDiv);
+                    listItem.appendChild(promoCodeDiv);
+                    listItem.appendChild(copyButton);
+                    promoListElement.appendChild(listItem);
+                });
+
+                // Check for updates every 1 second
+                setInterval(async () => {
+                    const updatedPromoCodes = await fetchPromoCodes();
+                    updatePromoList(updatedPromoCodes);
+                }, 1000);
+            }
+
+            initializePromoList();
+        })();
+    </script>
+</body>
+</html>
