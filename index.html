@@ -39,6 +39,10 @@
             background-color: #f4f4f4;
             cursor: default;
             display: inline-block;
+            width: 150px; /* Fixed width */
+            white-space: nowrap; /* Prevent text from wrapping */
+            overflow: hidden; /* Hide overflowing text */
+            text-overflow: ellipsis; /* Show ellipsis if text is too long */
         }
 
         .taken {
