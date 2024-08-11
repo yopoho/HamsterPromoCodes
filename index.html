@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,11 +41,14 @@
             background-color: #f4f4f4;
             cursor: default;
             display: inline-block;
-            text-align: center;
-            width: 130px; /* Fixed width */
-            white-space: nowrap; /* Prevent text from wrapping */
-            overflow: hidden; /* Hide overflowing text */
-            text-overflow: ellipsis; /* Show ellipsis if text is too long */
+            width: 130px;
+            /* Fixed width */
+            white-space: nowrap;
+            /* Prevent text from wrapping */
+            overflow: hidden;
+            /* Hide overflowing text */
+            text-overflow: ellipsis;
+            /* Show ellipsis if text is too long */
         }
 
         .taken {
@@ -76,26 +80,27 @@
         }
     </style>
 </head>
+
 <body>
-    <h2>
+    <h1>
         <a href="https://t.me/myHamsterKeyGameChannel" target="_blank" class="promo-link">Наш канал</a>
-    </h2>
+    </h1>
     <ul class="promo-list" id="a"></ul>
 
     <script>
-        (function() {
+        (function () {
             const cyrb53 = (str, seed = 0) => {
                 let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-                for(let i = 0, ch; i < str.length; i++) {
+                for (let i = 0, ch; i < str.length; i++) {
                     ch = str.charCodeAt(i);
                     h1 = Math.imul(h1 ^ ch, 2654435761);
                     h2 = Math.imul(h2 ^ ch, 1597334677);
                 }
-                h1  = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+                h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
                 h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-                h2  = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+                h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
                 h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-              
+
                 return 4294967296 * (2097151 & h2) + (h1 >>> 0);
             };
 
@@ -138,6 +143,10 @@
 
                     if (promoItem && promo.taken && !promoItem.classList.contains('taken')) {
                         promoItem.classList.add('taken');
+                        const buttons = promoItem.parentElement.getElementsByTagName("button");
+                        if (buttons.length > 0) {
+                            buttons[0].remove();
+                        }
                     }
                 });
             }
@@ -161,67 +170,67 @@
                     const promoCodeDiv = document.createElement('div');
                     promoCodeDiv.className = 'promo-code' + (promo.taken ? ' taken' : '');
                     promoCodeDiv.id = `promo${promoId}`;
-                    promoCodeDiv.textContent = promo.code.slice(0, 12) + '...';;
-
-                    const copyButton = document.createElement('button');
-                    copyButton.className = 'copy-btn';
-                    copyButton.textContent = 'Копировать';
-                    copyButton.onclick = async function() {
-                        const storageData = getStorageData();
-
-                        if (copyButton.textContent !== "Скопировано!" && storageData.copies >= maxCopiesPerDay) {
-                            alert("Вы достигли максимального количества копирований на сегодня.");
-                            return;
-                        }
-
-                        if (!canCopy && copyButton.textContent !== "Скопировано!") {
-                            alert("Подождите 10 секунд");
-                            return;
-                        }
-
-                        try {
-                            await navigator.clipboard.writeText(promo.code);
-                            copyButton.textContent = "Скопировано!";
-                            canCopy = false;
-
-                            storageData.copies += 1;
-                            updateStorageData(storageData);
-
-                            const response = await fetch(scriptUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded'
-                                },
-                                body: `code=${encodeURIComponent(promo.code)}`
-                            });
-
-                            const result = await response.text();
-                            if (result === "Success") {
-                                promoCodeDiv.classList.add('taken');
-                            } else {
-                                copyButton.textContent = "Копировать";
-                                alert("Не удалось отметить промо-код как использованный.");
-                            }
-
-                            // Reset canCopy after 10 seconds
-                            clearTimeout(copyTimeout);
-                            copyTimeout = setTimeout(() => {
-                                canCopy = true;
-                            }, waitTime);
-
-                        } catch (err) {
-                            console.log("Ошибка копирования", err);
-                            alert("Не удалось скопировать промо-код.");
-                        }
-                    };
+                    promoCodeDiv.textContent = promo.code.slice(0, 12) + '...';
 
                     listItem.appendChild(numberDiv);
                     listItem.appendChild(promoCodeDiv);
-                    listItem.appendChild(copyButton);
+
+                    if (!promo.taken) {
+                        const copyButton = document.createElement('button');
+                        copyButton.className = 'copy-btn';
+                        copyButton.textContent = 'Копировать';
+                        copyButton.onclick = async function () {
+                            const storageData = getStorageData();
+
+                            if (copyButton.textContent !== "Скопировано!" && storageData.copies >= maxCopiesPerDay) {
+                                alert("Вы достигли максимального количества копирований на сегодня.");
+                                return;
+                            }
+
+                            if (!canCopy && copyButton.textContent !== "Скопировано!") {
+                                alert("Подождите 10 секунд");
+                                return;
+                            }
+
+                            try {
+                                await navigator.clipboard.writeText(promo.code);
+                                promoCodeDiv.classList.add('taken');
+                                listItem.removeChild(copyButton);
+
+                                copyButton.textContent = "Скопировано!";
+                                canCopy = false;
+
+                                storageData.copies += 1;
+                                updateStorageData(storageData);
+
+                                const response = await fetch(scriptUrl, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    },
+                                    body: `code=${encodeURIComponent(promo.code)}`
+                                });
+
+                                let result = await response.text();
+                                if (result !== "Success") {
+                                    alert("Не удалось отметить промокод как использованный.");
+                                }
+
+                                copyTimeout = setTimeout(() => {
+                                    canCopy = true;
+                                }, waitTime);
+
+                            } catch (err) {
+                                console.log(err);
+                            }
+                        };
+
+                        listItem.appendChild(copyButton);
+                    }
+
                     promoListElement.appendChild(listItem);
                 });
 
-                // Check for updates every 1.5 seconds
                 setInterval(async () => {
                     const updatedPromoCodes = await fetchPromoCodes();
                     updatePromoList(updatedPromoCodes);
@@ -232,4 +241,5 @@
         })();
     </script>
 </body>
+
 </html>
