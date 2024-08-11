@@ -167,7 +167,7 @@
                     const promoCodeDiv = document.createElement('div');
                     promoCodeDiv.className = 'promo-code' + (promo.taken ? ' taken' : '');
                     promoCodeDiv.id = `promo${promoId}`;
-                    promoCodeDiv.textContent = promo.code.slice(0, 12) + '...';
+                    promoCodeDiv.textContent = promo.code.slice(0, 11) + '...';
 
                     listItem.appendChild(numberDiv);
                     listItem.appendChild(promoCodeDiv);
