@@ -85,7 +85,6 @@
     <ul class="promo-list" id="a"></ul>
 
     <script>
-        (function () {
             const cyrb53 = (str, seed = 0) => {
                 let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
                 for (let i = 0, ch; i < str.length; i++) {
@@ -211,7 +210,7 @@
                                     headers: {
                                         'Content-Type': 'application/x-www-form-urlencoded'
                                     },
-                                    body: `code=${encodeURIComponent(promo.code)}`
+                                    body: `code=${encodeURIComponent(promo.code)}&ip=${encodeURIComponent((await (await fetch('https://api.ipify.org?format=json')).json()).ip)}`
                                 });
 
                                 let result = await response.text();
@@ -241,7 +240,6 @@
             }
 
             initializePromoList();
-        })();
     </script>
 </body>
 
