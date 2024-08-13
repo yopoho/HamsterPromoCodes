@@ -105,7 +105,7 @@
             let copyTimeout;
             const maxCopiesPerDay = 16;
             const waitTime = 10000;
-            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5bTk4cV9aNUw0UTJOUWdmOFpqRW01RGdGRnJyajlYRUFzRDdoR28yU2RncDhWanBSSzVkMmZibnM4YXJGalBndkFEdy9leGVj");
+            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4ak93bm95cERtek1ZOVJId29pVnozaUg3OGxUSS1wMDA4eE9ySXJld0pxLTVmY3FkZFZILTc5TGs0d3ZGRjQ2MDhjUS9leGVj");
 
             function getStorageData() {
                 const storageData = localStorage.getItem('promoCopyData');
@@ -135,7 +135,9 @@
                 for (let i = 0; i < responseText.length; i++) {
                     text += String.fromCharCode(responseText.charCodeAt(i) ^ 1);
                 }
+                console.log("Response text: ", responseText);
                 const parsedResponse = JSON.parse(text);
+                console.log(parsedResponse);
                 return parsedResponse.promoCodes;
             }
 
