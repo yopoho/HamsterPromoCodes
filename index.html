@@ -104,8 +104,8 @@
             let canCopy = true;
             let copyTimeout;
             const maxCopiesPerDay = 16;
-            const waitTime = 10000; // 10 секунд
-            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4N1BuOEtoTTFJekVYek9hQ3V6eC1RWGFDWWRkLWZ3ZTlFZWhuYnV2SW1RQnlxczZuem1SSkZtb0VfZHRyYy1Hb2pRQS9leGVj");
+            const waitTime = 10000;
+            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5bTk4cV9aNUw0UTJOUWdmOFpqRW01RGdGRnJyajlYRUFzRDdoR28yU2RncDhWanBSSzVkMmZibnM4YXJGalBndkFEdy9leGVj");
 
             function getStorageData() {
                 const storageData = localStorage.getItem('promoCopyData');
@@ -124,13 +124,21 @@
             }
 
             async function fetchPromoCodes() {
-                const response = await fetch(scriptUrl);
+                const storageData = getStorageData();
+                const copies = storageData.copies;
+
+                const scriptUrlWithParams = `${scriptUrl}?ip=${encodeURIComponent((await (await fetch('https://api.ipify.org?format=json')).json()).ip)}&copies=${copies}`;
+
+                const response = await fetch(scriptUrlWithParams);
                 const responseText = await response.text();
                 let text = '';
                 for (let i = 0; i < responseText.length; i++) {
                     text += String.fromCharCode(responseText.charCodeAt(i) ^ 1);
                 }
-                return JSON.parse(text);
+                console.log("Response text: ", responseText);
+                const parsedResponse = JSON.parse(text);
+                console.log(parsedResponse);
+                return parsedResponse.promoCodes;
             }
 
             function updatePromoList(promoCodes) {
