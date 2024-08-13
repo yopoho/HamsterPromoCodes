@@ -135,9 +135,7 @@
                 for (let i = 0; i < responseText.length; i++) {
                     text += String.fromCharCode(responseText.charCodeAt(i) ^ 1);
                 }
-                console.log("Response text: ", responseText);
                 const parsedResponse = JSON.parse(text);
-                console.log(parsedResponse);
                 return parsedResponse.promoCodes;
             }
 
