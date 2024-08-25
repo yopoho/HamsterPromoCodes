@@ -85,161 +85,166 @@
     <ul class="promo-list" id="a"></ul>
 
     <script>
-            const cyrb53 = (str, seed = 0) => {
-                let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-                for (let i = 0, ch; i < str.length; i++) {
-                    ch = str.charCodeAt(i);
-                    h1 = Math.imul(h1 ^ ch, 2654435761);
-                    h2 = Math.imul(h2 ^ ch, 1597334677);
+        const cyrb53 = (str, seed = 0) => {
+            let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+            for (let i = 0, ch; i < str.length; i++) {
+                ch = str.charCodeAt(i);
+                h1 = Math.imul(h1 ^ ch, 2654435761);
+                h2 = Math.imul(h2 ^ ch, 1597334677);
+            }
+            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+            h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+            h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+            return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+        };
+
+        let canCopy = true;
+        let copyTimeout;
+        const maxCopiesPerDay = 36;
+        const waitTime = 8000;
+        let lastCopyTime = 0;
+        const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5a0pfWUpmT0FJNnhVWHZXZWZzVkNxQXpjNEhsTjJ5S3RtNmRDWVBrcjFOcnlrVGVBTGdUVWlPS3RNWUE3b3ZldDNGdy9leGVj");
+
+        function getStorageData() {
+            const storageData = localStorage.getItem('promoCopyData');
+            const today = new Date().toISOString().split('T')[0];
+            if (storageData) {
+                const data = JSON.parse(storageData);
+                if (data.date === today) {
+                    return data;
                 }
-                h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
-                h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-                h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
-                h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+            }
+            return { date: today, copies: 0 };
+        }
 
-                return 4294967296 * (2097151 & h2) + (h1 >>> 0);
-            };
+        function updateStorageData(data) {
+            localStorage.setItem('promoCopyData', JSON.stringify(data));
+        }
 
-            let canCopy = true;
-            let copyTimeout;
-            const maxCopiesPerDay = 36;
-            const waitTime = 8000;
-            const scriptUrl = atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5a0pfWUpmT0FJNnhVWHZXZWZzVkNxQXpjNEhsTjJ5S3RtNmRDWVBrcjFOcnlrVGVBTGdUVWlPS3RNWUE3b3ZldDNGdy9leGVj");
+        async function fetchPromoCodes() {
+            const storageData = getStorageData();
+            const copies = storageData.copies;
 
-            function getStorageData() {
-                const storageData = localStorage.getItem('promoCopyData');
-                const today = new Date().toISOString().split('T')[0];
-                if (storageData) {
-                    const data = JSON.parse(storageData);
-                    if (data.date === today) {
-                        return data;
+            const scriptUrlWithParams = `${scriptUrl}?ip=${encodeURIComponent((await (await fetch('https://api.ipify.org?format=json')).json()).ip)}&copies=${copies}`;
+
+            const response = await fetch(scriptUrlWithParams);
+            const responseText = await response.text();
+            let text = '';
+            for (let i = 0; i < responseText.length; i++) {
+                text += String.fromCharCode(responseText.charCodeAt(i) ^ 1);
+            }
+            const parsedResponse = JSON.parse(text);
+            return parsedResponse.promoCodes;
+        }
+
+        function updatePromoList(promoCodes) {
+            promoCodes.forEach((promo) => {
+                const promoId = cyrb53(promo.code);
+                const promoItem = document.getElementById(`promo${promoId}`);
+
+                if (promoItem && promo.taken && !promoItem.classList.contains('taken')) {
+                    promoItem.classList.add('taken');
+                    const buttons = promoItem.parentElement.getElementsByTagName("button");
+                    if (buttons.length > 0) {
+                        buttons[0].remove();
                     }
                 }
-                return { date: today, copies: 0 };
-            }
+            });
+        }
 
-            function updateStorageData(data) {
-                localStorage.setItem('promoCopyData', JSON.stringify(data));
-            }
+        async function initializePromoList() {
+            const promoCodes = await fetchPromoCodes();
+            promoCodes.sort((a, b) => a.taken - b.taken);
 
-            async function fetchPromoCodes() {
-                const storageData = getStorageData();
-                const copies = storageData.copies;
+            const promoListElement = document.getElementById('a');
+            promoListElement.innerHTML = '';
 
-                const scriptUrlWithParams = `${scriptUrl}?ip=${encodeURIComponent((await (await fetch('https://api.ipify.org?format=json')).json()).ip)}&copies=${copies}`;
+            promoCodes.forEach((promo) => {
+                const promoId = cyrb53(promo.code);
+                const listItem = document.createElement('li');
+                listItem.className = 'promo-item';
 
-                const response = await fetch(scriptUrlWithParams);
-                const responseText = await response.text();
-                let text = '';
-                for (let i = 0; i < responseText.length; i++) {
-                    text += String.fromCharCode(responseText.charCodeAt(i) ^ 1);
-                }
-                const parsedResponse = JSON.parse(text);
-                return parsedResponse.promoCodes;
-            }
+                const numberDiv = document.createElement('div');
+                numberDiv.className = 'promo-number';
+                numberDiv.textContent = `${promoCodes.indexOf(promo) + 1}.`;
 
-            function updatePromoList(promoCodes) {
-                promoCodes.forEach((promo) => {
-                    const promoId = cyrb53(promo.code);
-                    const promoItem = document.getElementById(`promo${promoId}`);
+                const promoCodeDiv = document.createElement('div');
+                promoCodeDiv.className = 'promo-code' + (promo.taken ? ' taken' : '');
+                promoCodeDiv.id = `promo${promoId}`;
+                promoCodeDiv.textContent = promo.code.slice(0, 11) + '...';
 
-                    if (promoItem && promo.taken && !promoItem.classList.contains('taken')) {
-                        promoItem.classList.add('taken');
-                        const buttons = promoItem.parentElement.getElementsByTagName("button");
-                        if (buttons.length > 0) {
-                            buttons[0].remove();
+                listItem.appendChild(numberDiv);
+                listItem.appendChild(promoCodeDiv);
+
+                if (!promo.taken) {
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-btn';
+                    copyButton.textContent = 'Копировать';
+                    copyButton.onclick = async function () {
+                        const storageData = getStorageData();
+
+                        const currentTime = Date.now();
+                        const timePassed = currentTime - lastCopyTime;
+
+                        if (copyButton.textContent !== "Скопировано!" && storageData.copies >= maxCopiesPerDay) {
+                            alert("Вы достигли максимального количества копирований на сегодня.");
+                            return;
                         }
-                    }
-                });
-            }
 
-            async function initializePromoList() {
-                const promoCodes = await fetchPromoCodes();
-                promoCodes.sort((a, b) => a.taken - b.taken);
+                        if (!canCopy && timePassed < waitTime) {
+                            alert(`Подождите еще ${Math.ceil((waitTime - timePassed) / 1000)} секунд`);
+                            return;
+                        }
 
-                const promoListElement = document.getElementById('a');
-                promoListElement.innerHTML = '';
+                        try {
+                            await navigator.clipboard.writeText(promo.code);
+                            promoCodeDiv.classList.add('taken');
+                            listItem.removeChild(copyButton);
 
-                promoCodes.forEach((promo) => {
-                    const promoId = cyrb53(promo.code);
-                    const listItem = document.createElement('li');
-                    listItem.className = 'promo-item';
+                            copyButton.textContent = "Скопировано!";
+                            canCopy = false;
+                            lastCopyTime = currentTime;
 
-                    const numberDiv = document.createElement('div');
-                    numberDiv.className = 'promo-number';
-                    numberDiv.textContent = `${promoCodes.indexOf(promo) + 1}.`;
+                            storageData.copies += 1;
+                            updateStorageData(storageData);
 
-                    const promoCodeDiv = document.createElement('div');
-                    promoCodeDiv.className = 'promo-code' + (promo.taken ? ' taken' : '');
-                    promoCodeDiv.id = `promo${promoId}`;
-                    promoCodeDiv.textContent = promo.code.slice(0, 11) + '...';
+                            const response = await fetch(scriptUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                },
+                                body: `code=${encodeURIComponent(promo.code)}&ip=${encodeURIComponent((await (await fetch('https://api.ipify.org?format=json')).json()).ip)}`
+                            });
 
-                    listItem.appendChild(numberDiv);
-                    listItem.appendChild(promoCodeDiv);
-
-                    if (!promo.taken) {
-                        const copyButton = document.createElement('button');
-                        copyButton.className = 'copy-btn';
-                        copyButton.textContent = 'Копировать';
-                        copyButton.onclick = async function () {
-                            const storageData = getStorageData();
-
-                            if (copyButton.textContent !== "Скопировано!" && storageData.copies >= maxCopiesPerDay) {
-                                alert("Вы достигли максимального количества копирований на сегодня.");
-                                return;
+                            let result = await response.text();
+                            if (result !== "Success") {
+                                alert("Не удалось отметить промокод как использованный.");
                             }
 
-                            if (!canCopy && copyButton.textContent !== "Скопировано!") {
-                                alert("Подождите 8 секунд");
-                                return;
-                            }
+                            copyTimeout = setTimeout(() => {
+                                canCopy = true;
+                            }, waitTime);
 
-                            try {
-                                await navigator.clipboard.writeText(promo.code);
-                                promoCodeDiv.classList.add('taken');
-                                listItem.removeChild(copyButton);
+                        } catch (err) {
+                            console.log(err);
+                        }
+                    };
 
-                                copyButton.textContent = "Скопировано!";
-                                canCopy = false;
+                    listItem.appendChild(copyButton);
+                }
 
-                                storageData.copies += 1;
-                                updateStorageData(storageData);
+                promoListElement.appendChild(listItem);
+            });
 
-                                const response = await fetch(scriptUrl, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded'
-                                    },
-                                    body: `code=${encodeURIComponent(promo.code)}&ip=${encodeURIComponent((await (await fetch('https://api.ipify.org?format=json')).json()).ip)}`
-                                });
+            setInterval(async () => {
+                const updatedPromoCodes = await fetchPromoCodes();
+                updatePromoList(updatedPromoCodes);
+            }, 1500);
+        }
 
-                                let result = await response.text();
-                                if (result !== "Success") {
-                                    alert("Не удалось отметить промокод как использованный.");
-                                }
-
-                                copyTimeout = setTimeout(() => {
-                                    canCopy = true;
-                                }, waitTime);
-
-                            } catch (err) {
-                                console.log(err);
-                            }
-                        };
-
-                        listItem.appendChild(copyButton);
-                    }
-
-                    promoListElement.appendChild(listItem);
-                });
-
-                setInterval(async () => {
-                    const updatedPromoCodes = await fetchPromoCodes();
-                    updatePromoList(updatedPromoCodes);
-                }, 1500);
-            }
-
-            initializePromoList();
+        initializePromoList();
     </script>
 </body>
 
